@@ -1,5 +1,6 @@
 class Car:
 	"""A simple attempt to represent a car."""
+
 	def __init__(self, make, model, year):
 		"""Initialize attributes to describe a car."""
 		self.make = make
@@ -20,11 +21,19 @@ class Car:
 		"""Set the odometer reading to the given value."""
 		self.odometer_reading = mileage
 
-my_old_car =Car('cortina','f1','1978')
-my_new_car = Car('audi', 'a4', 2019)
+	def get_range(self):
+		"""Print a statement about the range this battery provides."""
+		if self.battery_size == 75:
+			range = 260
+		elif self.battery_size == 100:
+			range = 315
+		print(f"This car can go about {range} miles on a full charge.")
+
+# my_old_car =Car('cortina','f1','1978')
+# my_new_car = Car('audi', 'a4', 2019)
 
 
-my_new_car.update_odometer(23)
-my_new_car.read_odometer()
-print(my_old_car.get_descriptive_name())
-print(my_new_car.get_descriptive_name())
+# my_new_car.update_odometer(23)
+# my_new_car.read_odometer()
+# print(my_old_car.get_descriptive_name())
+# print(my_new_car.get_descriptive_name())

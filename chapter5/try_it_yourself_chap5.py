@@ -9,10 +9,36 @@ print("is fruit  == 'pinapple'? I predict True.")
 print(fruit == 'pinapple')
 
 # 5.3
+alien_0 = {'color': 'green', 'speed': 'slow'}
+point_value = alien_0.get('points', 'No point value assigned.')
+
+alien_0 = {'color': 'green', 'points': 5}
+alien_1 = {'color': 'yellow', 'points': 10}
+alien_2 = {'color': 'red', 'points': 15}
+aliens = [alien_0, alien_1, alien_2]
+for alien in aliens:
+    print(alien)
 
 # 5.4
+# aliens = {'color': 'green', 'speed': 'slow'}
+# for alien in aliens:
+#     if alien 'color' = "green"
+#         print("5 points")
+#     else:
+#         print("10 points")
+
+    
 
 # 5.5
+ # aliens = {'color': 'green', 'speed': 'slow'}
+# for alien in aliens:
+#     if alien 'color' = "green"
+#         print("5 points")
+#       elif alien "color" = "yellow"
+#       print("10 points")
+#     else:
+#         print("10 points")
+
 
 # 5.6 
 age = 8
@@ -30,6 +56,7 @@ elif age >= 65:
    print("Person is a elder")
 
 # 5.7
+ 
 
 
 # 5.8
