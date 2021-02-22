@@ -1,9 +1,11 @@
 import sys
+from time import sleep
 import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+from game_stats import GameStats
 
 
 class AlienInvasion:
@@ -17,6 +19,8 @@ class AlienInvasion:
 		self.settings.screen_width = self.screen.get_rect().width
 		self.settings.screen_height = self.screen.get_rect().height
 		pygame.display.set_caption("Alien Invasion")
+		# Create an instance to store game statistics.
+		self.stats = GameStats(self)
 		self.ship = Ship(self)
 		self.bullets = pygame.sprite.Group()
 		self._check_events()
@@ -30,12 +34,13 @@ class AlienInvasion:
 			self._check_events()
 			self.ship.update()
 			self._update_bullets()
+			self._update_aliens()
 			self._update_screen()
 			# Get rid of bullets that have disappeared.
 			for bullet in self.bullets.copy():
 				if bullet.rect.bottom <= 0:
 					self.bullets.remove(bullet)
-			print(len(self.bullets))
+			#print(len(self.bullets))
 	
 
 
@@ -76,24 +81,83 @@ class AlienInvasion:
 
 	def _fire_bullet(self):
 		"""Create a new bullet and add it to the bullets group."""
+		
 		if len(self.bullets) < self.settings.bullets_allowed:
 			new_bullet = Bullet(self)
 			self.bullets.add(new_bullet)
+		
 
 	def _update_bullets(self):
 		"""Update position of bullets and get rid of old bullets."""
+		# If so, get rid of the bullet and the alien.
+		# Check for any bullets that have hit aliens.
+									# collisions = pygame.sprite.groupcollide(
+									# 		self.bullets, self.aliens, True, True)
+		# Check for any bullets that have hit aliens.
 		# Update bullet positions.
 		self.bullets.update()
 		# Get rid of bullets that have disappeared.
 		for bullet in self.bullets.copy():
 			if bullet.rect.bottom <= 0:
 				self.bullets.remove(bullet)
+		self._check_bullet_alien_collisions()
+
+		if not self.aliens:
+			#Destroy existing bullets and create new fleet.
+			self.bullets.empty()
+			self._create_fleet()
+
+	def _check_bullet_alien_collisions(self):
+		"""Respond to bullet-alien collisions."""
+		# Remove any bullets and aliens that have collided.
+		collisions = pygame.sprite.groupcollide(
+				self.bullets, self.aliens, True, True)
+		if not self.aliens:
+			# Destroy existing bullets and create new fleet.
+			self.bullets.empty()
+			self._create_fleet()
 
 
 	def _create_fleet(self):
 		"""Create the fleet of aliens."""
 		# Make an alien.
 		alien = Alien(self)
+		self.aliens.add(alien)
+		# Create an alien and find the number of aliens in a row.
+		# Spacing between each alien is equal to one alien width.
+		alien = Alien(self)
+		alien_width, alien_height = alien.rect.size
+		alien_width = alien.rect.width
+		available_space_x = self.settings.screen_width - (2 * alien_width)
+		number_aliens_x = available_space_x // (2 * alien_width)
+		# Determine the number of rows of aliens that fit on the screen.
+		ship_height = self.ship.rect.height
+		# Create the first row of aliens.
+		available_space_y = (self.settings.screen_height - 
+								(3 * alien_height) - ship_height)
+		# Create the full fleet of aliens.
+		number_rows = available_space_y // (2 * alien_height)
+		for row_number in range(number_rows):
+			for alien_number in range(number_aliens_x):
+				# self._create_alien(alien_number)
+				self._create_alien(alien_number, row_number)
+				# Create an alien and place it in the row.
+			
+	def _create_alien(self, alien_number):
+		"""Create an alien and place it in the row."""
+		alien = Alien(self)
+		alien_width = alien.rect.width
+		alien.x = alien_width + 2 * alien_width * alien_number
+		alien.rect.x = alien.x
+		self.aliens.add(alien)
+
+	def _create_alien(self, alien_number, row_number):
+		"""Create an alien and place it in the row."""
+		alien = Alien(self)
+		alien_width, alien_height = alien.rect.size
+		alien.x = alien_width + 2 * alien_width * alien_number
+		alien.rect.x = alien.x
+		alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
 		self.aliens.add(alien)
 
 
@@ -108,7 +172,78 @@ class AlienInvasion:
 		pygame.display.flip()
 
 
+
+	def _update_aliens(self):
+		"""
+		Check if the fleet is at an edge,
+			then update the positions of all aliens in the fleet.
+			"""
+		self._check_fleet_edges()
+		"""Update the positions of all aliens in the fleet."""
+		self.aliens.update()
+		# Look for alien-ship collisions.
+		if pygame.sprite.spritecollideany(self.ship, self.aliens):
+			# print("Ship hit!!!")
+			self._ship_hit()
+		# Look for aliens hitting the bottom of the screen.
+		self._check_aliens_bottom()
+
+
+	def _check_fleet_edges(self):
+		"""Respond appropriately if any aliens have reached an edge."""
+		for alien in self.aliens.sprites():
+			if alien.check_edges():
+				self._change_fleet_direction()
+				break
+
+	def _change_fleet_direction(self):
+		"""Drop the entire fleet and change the fleet's direction."""
+		for alien in self.aliens.sprites():
+			alien.rect.y += self.settings.fleet_drop_speed
+		self.settings.fleet_direction *= -1
+				
+
+	def _ship_hit(self):
+		"""Respond to the ship being hit by an alien."""
+		# Decrement ships_left.
+		self.stats.ships_left -= 1
+		# Get rid of any remaining aliens and bullets.
+		self.aliens.empty()
+		self.bullets.empty()
+		# Create a new fleet and center the ship.
+		self._create_fleet()
+		self.ship.center_ship()
+		# Pause.
+		sleep(0.5)
+
+
+	def _check_aliens_bottom(self):
+		"""Check if any aliens have reached the bottom of the screen."""
+		screen_rect = self.screen.get_rect()
+		for alien in self.aliens.sprites():
+			if alien.rect.bottom >= screen_rect.bottom:
+				# Treat this the same as if the ship got hit.
+				self._ship_hit()
+				break
+
+
+
 if __name__ == '__main__':
 	# Make a game instance, and run the game.
 	ai = AlienInvasion()
 	ai.run_game()
+
+
+
+	# def _create_alien(self, alien_number, row_number):
+	# 	"""Create an alien and place it in the row."""
+	# 	alien = Alien(self)
+	# 	alien_width, alien_height = alien.rect.size
+	# 	alien.x = alien_width + 2 * alien_width * alien_number
+	# 	alien.rect.x = alien.x
+	# 	alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+	# 	self.aliens.add(alien)
+
+
+
+# pg 347
